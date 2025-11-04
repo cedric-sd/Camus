@@ -1,6 +1,9 @@
 # Camus
 
-This project is a sandbox to meetings implementation using P2P and WebRTC
+This project is a sandbox to meetings implementation using P2P and WebRTC.
+Using this technologies: nest.js, next.js, peer.js.
+
+Next step comunication with another streams clients.
 
 ## 👣 How to test?
 
@@ -12,6 +15,10 @@ This project is a sandbox to meetings implementation using P2P and WebRTC
 
 `npm i`
 `npm run start`
+
+3. To run a front and see in action (run inside public folder)
+
+`npm run dev`
 
 ## References:
 
