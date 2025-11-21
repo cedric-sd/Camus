@@ -16,6 +16,22 @@ export default function HomePage() {
   const [audioEnabled, setAudioEnabled] = useState(true)
   const [roomCode, setRoomCode] = useState("")
 
+  const toggleVideo = () => {
+    const enabled = toggleVideoTrack(stream)
+    setVideoEnabled(enabled)
+  }
+
+  const toggleAudio = () => {
+    const enabled = toggleAudioTrack(stream)
+    setAudioEnabled(enabled)
+  }
+
+  const joinRoom = () => {
+    if (roomCode.trim()) {
+      router.push(`/${roomCode}`)
+    }
+  }
+
   useEffect(() => {
     const initCamera = async () => {
       const mediaStream = await startCamera({ video: true, audio: true })
@@ -34,30 +50,9 @@ export default function HomePage() {
     }
   }, [])
 
-  const toggleVideo = () => {
-    const enabled = toggleVideoTrack(stream)
-    setVideoEnabled(enabled)
-  }
-
-  const toggleAudio = () => {
-    const enabled = toggleAudioTrack(stream)
-    setAudioEnabled(enabled)
-  }
-
-  const joinRoom = () => {
-    if (roomCode.trim()) {
-      router.push(`/${roomCode}`)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-6xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Chamadas de vídeo premium</h1>
-          <p className="text-muted-foreground text-lg">Conecte-se com sua equipe de qualquer lugar</p>
-        </div>
-
         <div className="grid md:grid-cols-2 gap-8 items-start">
           {/* Video Preview */}
           <Card className="overflow-hidden bg-card">
@@ -102,11 +97,11 @@ export default function HomePage() {
           {/* Join Room Section */}
           <div className="space-y-6">
             <Card className="p-8 bg-card">
-              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Entrar em uma sala</h2>
+              <h2 className="text-2xl font-semibold text-card-foreground">Entrar em uma sala</h2>
 
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <div>
-                  <label className="text-sm font-medium text-card-foreground mb-2 block">Código da sala</label>
+                  <label className="text-sm font-medium text-card-foreground block">Código da sala</label>
                   <Input
                     type="text"
                     placeholder="Digite o código da sala"
@@ -129,8 +124,8 @@ export default function HomePage() {
             </Card>
 
             <Card className="p-8 bg-card">
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">Criar nova reunião</h3>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
+              <h3 className="text-xl font-semibold text-card-foreground">Criar nova reunião</h3>
+              <p className="text-muted-foreground leading-relaxed">
                 Inicie uma nova chamada de vídeo instantaneamente e compartilhe o código com os participantes
               </p>
               <Button

@@ -1,10 +1,12 @@
 "use client"
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { startCamera, stopMediaStream, toggleAudioTrack, toggleVideoTrack } from "@/lib/camera"
 import { Check, Copy, MessageSquare, Mic, MicOff, MoreVertical, PhoneOff, Users, Video, VideoOff } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
+import { Peer } from "peerjs"
 import { useEffect, useRef, useState } from "react"
 
 interface Participant {
@@ -25,31 +27,9 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false)
   const roomId = params.roomId as string
 
-  // Simulated participants for demo
   const [participants, setParticipants] = useState<Participant[]>([
     { id: "1", name: "Você", videoEnabled: true, audioEnabled: true },
-    { id: "2", name: "Ana Silva", videoEnabled: true, audioEnabled: true },
-    { id: "3", name: "Carlos Santos", videoEnabled: false, audioEnabled: true },
-    { id: "4", name: "Maria Oliveira", videoEnabled: true, audioEnabled: false },
   ])
-
-  useEffect(() => {
-    const initCamera = async () => {
-      const mediaStream = await startCamera({ video: true, audio: true })
-      if (mediaStream) {
-        setStream(mediaStream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream
-        }
-      }
-    }
-
-    initCamera()
-
-    return () => {
-      stopMediaStream(stream)
-    }
-  }, [])
 
   const toggleVideo = () => {
     const enabled = toggleVideoTrack(stream)
@@ -75,6 +55,63 @@ export default function RoomPage() {
     // })
     setTimeout(() => setCopied(false), 2000)
   }
+
+  useEffect(() => {
+    let currentStream: MediaStream | null = null;
+
+    startCamera({ video: true, audio: true })
+      .then((mediaStream: MediaStream | null) => {
+        if (!mediaStream) return
+
+        currentStream = mediaStream
+        setStream(mediaStream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+        }
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+
+    return () => {
+      stopMediaStream(currentStream)
+    }
+  }, [])
+
+  useEffect(() => {
+    const peer = new Peer({
+      port: 9000,
+      path: "/",
+      secure: false,
+    });
+
+    if(stream) {
+      peer.on('open', (id: string) => {
+        peer.call(id, stream);
+      });
+      peer.on('call', (call) => {
+        call.answer(stream);
+        call.on('stream', (remoteStream) => {
+          setParticipants((prevParticipants) => [
+            ...prevParticipants,
+            {
+              id: call.peer,
+              name: call.peer,
+              videoEnabled: true,
+              audioEnabled: true,
+            },
+          ]);
+          if (videoRef.current) {
+            videoRef.current.srcObject = remoteStream;
+          }
+        })
+      })
+    }
+
+    return () => {
+      peer.destroy()
+    }
+  }, [roomId, stream])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -104,10 +141,10 @@ export default function RoomPage() {
       </header>
 
       {/* Video Grid */}
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-6 overflow-auto bg-black">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-w-7xl mx-auto">
           {/* Main User Video */}
-          <Card className="overflow-hidden bg-card aspect-video relative group">
+          <Card className="overflow-hidden aspect-video relative group bg-gray-700">
             {videoEnabled ? (
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             ) : (
@@ -128,11 +165,9 @@ export default function RoomPage() {
             <Card key={participant.id} className="overflow-hidden bg-card aspect-video relative group">
               {participant.videoEnabled ? (
                 <div className="w-full h-full bg-muted flex items-center justify-center">
-                  <img
-                    src={`/placeholder.svg?height=400&width=600&query=professional person in video call`}
-                    alt={participant.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <Avatar>
+                    <AvatarFallback className="">CN</AvatarFallback>
+                  </Avatar>
                 </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -151,7 +186,7 @@ export default function RoomPage() {
       </main>
 
       {/* Controls Bar */}
-      <footer className="bg-card border-t border-border px-6 py-6">
+      <footer className="p-6 bg-gray-800">
         <div className="flex items-center justify-center gap-3">
           <Button
             size="lg"
